@@ -6,6 +6,12 @@ export const CANONICAL_HANDLES = {
 
 export const CJP_LEGACY_X_HANDLE = 'CJP_2029';
 
+/** @CJP_2029 peak before block on 21 May 2026, 12:00 IST */
+export const CJP_LEGACY_X_FOLLOWERS = 187_200;
+
+/** 12:00 IST = 06:30 UTC */
+export const CJP_BLOCK_TIMESTAMP = '2026-05-21T06:30:00.000Z';
+
 export function isCanonicalSnapshot(
   party: 'BJP' | 'CJP',
   platform: 'instagram' | 'x',
@@ -16,4 +22,22 @@ export function isCanonicalSnapshot(
 
   const expected = CANONICAL_HANDLES[party][platform];
   return normalized.toLowerCase() === expected.toLowerCase();
+}
+
+/** Canonical rows plus the legacy CJP X account (for chart history only). */
+export function isAllowedSnapshot(
+  party: 'BJP' | 'CJP',
+  platform: 'instagram' | 'x',
+  handle: string
+): boolean {
+  const normalized = handle.replace(/_mock$/i, '').trim();
+  if (!normalized || normalized.includes('_mock')) return false;
+
+  if (isCanonicalSnapshot(party, platform, normalized)) return true;
+
+  return (
+    party === 'CJP' &&
+    platform === 'x' &&
+    normalized.toLowerCase() === CJP_LEGACY_X_HANDLE.toLowerCase()
+  );
 }

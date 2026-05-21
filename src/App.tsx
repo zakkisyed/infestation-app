@@ -98,7 +98,7 @@ export default function App() {
           <div>
             <h4 className="font-heading font-black uppercase text-lg tracking-wider">Handle Migration</h4>
             <p className="font-bold text-sm text-brand-bg/80">
-              @CJP_2029 blocked at <span className="text-stamp">187.2K</span>. Now tracking{' '}
+              @CJP_2029 blocked today 12:00 IST at <span className="text-stamp">187.2K</span>. Now tracking{' '}
               <span className="text-cjp">@Cockroachisback</span> (X) and{' '}
               <span className="text-cjp">@cockroachjantaparty</span> (Instagram).
             </p>

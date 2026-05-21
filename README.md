@@ -44,6 +44,8 @@ After any script changes, use **Deploy > Manage deployments > Edit > New version
 2. Click **Run**.
 3. Check your Google Sheet to verify that sample historical data from May 19, 2026 through today was generated.
 
+**@CJP_2029 block marker:** Seed includes a row at **12:00 IST (06:30 UTC) on 21 May 2026** with **187,200** followers on X. If you already seeded without it, run `seedCjpBlockedBaseline` once in Apps Script.
+
 ### 5. GitHub Actions Webhook Integration (15-minute snapshots)
 A Python scraper (`scripts/scrape.py`) runs on GitHub Actions every **15 minutes** and POSTs live counts to your Apps Script web app.
 

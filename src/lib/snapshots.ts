@@ -1,3 +1,8 @@
+import {
+  isAllowedSnapshot,
+  isCanonicalSnapshot,
+} from './accounts';
+
 export interface RawSnapshotRow {
   id?: number | string;
   captured_at?: string;
@@ -26,8 +31,6 @@ export interface ChartDataPoint {
   bjp_total: number;
   cjp_total: number;
 }
-
-import { isCanonicalSnapshot } from './accounts';
 
 export interface AggregatedData {
   latestBJPInsta: number;
@@ -71,8 +74,7 @@ export function normalizeSnapshots(rows: unknown[]): FollowerSnapshot[] {
     if (!Number.isFinite(id) || id <= 0) continue;
 
     const handle = String(r.handle ?? '');
-    if (handle.includes('_mock')) continue;
-    if (!isCanonicalSnapshot(party as 'BJP' | 'CJP', platform as 'instagram' | 'x', handle)) {
+    if (!isAllowedSnapshot(party as 'BJP' | 'CJP', platform as 'instagram' | 'x', handle)) {
       continue;
     }
 
@@ -91,9 +93,7 @@ export function normalizeSnapshots(rows: unknown[]): FollowerSnapshot[] {
   );
 }
 
-export function aggregateSnapshots(snapshots: FollowerSnapshot[]): AggregatedData | null {
-  if (snapshots.length === 0) return null;
-
+function buildChartData(snapshots: FollowerSnapshot[]): ChartDataPoint[] {
   const timeMap = new Map<string, ChartDataPoint>();
 
   for (const s of snapshots) {
@@ -120,21 +120,47 @@ export function aggregateSnapshots(snapshots: FollowerSnapshot[]): AggregatedDat
     entry.cjp_total = entry.cjp_instagram + entry.cjp_x;
   }
 
-  const chartData = Array.from(timeMap.values()).sort(
+  return Array.from(timeMap.values()).sort(
     (a, b) => new Date(a.captured_at).getTime() - new Date(b.captured_at).getTime()
   );
+}
 
-  const latest =
-    [...chartData].reverse().find((p) => p.bjp_total + p.cjp_total > 0) ??
-    chartData[chartData.length - 1];
+function latestCanonicalMetrics(snapshots: FollowerSnapshot[]): {
+  lastScan: string;
+  latestBJPInsta: number;
+  latestBJPX: number;
+  latestCJPInsta: number;
+  latestCJPX: number;
+} | null {
+  const canonical = snapshots.filter((s) =>
+    isCanonicalSnapshot(s.party, s.platform, s.handle)
+  );
+  if (canonical.length === 0) return null;
+
+  const latestTime = canonical[canonical.length - 1].captured_at;
+  const atLatest = canonical.filter((s) => s.captured_at === latestTime);
+
+  const pick = (party: 'BJP' | 'CJP', platform: 'instagram' | 'x') =>
+    atLatest.find((s) => s.party === party && s.platform === platform)?.follower_count ?? 0;
+
+  return {
+    lastScan: latestTime,
+    latestBJPInsta: pick('BJP', 'instagram'),
+    latestBJPX: pick('BJP', 'x'),
+    latestCJPInsta: pick('CJP', 'instagram'),
+    latestCJPX: pick('CJP', 'x'),
+  };
+}
+
+export function aggregateSnapshots(snapshots: FollowerSnapshot[]): AggregatedData | null {
+  if (snapshots.length === 0) return null;
+
+  const chartData = buildChartData(snapshots);
+  const latest = latestCanonicalMetrics(snapshots);
   if (!latest) return null;
 
   return {
-    latestBJPInsta: latest.bjp_instagram,
-    latestBJPX: latest.bjp_x,
-    latestCJPInsta: latest.cjp_instagram,
-    latestCJPX: latest.cjp_x,
-    lastScan: latest.captured_at,
+    ...latest,
     chartData,
   };
 }
