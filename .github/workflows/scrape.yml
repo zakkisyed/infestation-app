@@ -2,13 +2,22 @@ name: 15-Minute Scraper
 
 on:
   schedule:
+    # Every 15 minutes (UTC). Runs on default branch (main).
     - cron: "*/15 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: scrape-snapshot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   scrape-and-post:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,4 +34,9 @@ jobs:
       - name: Run Scraper
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        working-directory: ${{ github.workspace }}
         run: python scripts/scrape.py
+
+      - name: Verify snapshot posted
+        if: success()
+        run: echo "Snapshot run completed at $(date -u +%Y-%m-%dT%H:%M:%SZ)"

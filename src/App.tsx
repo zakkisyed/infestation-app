@@ -4,25 +4,8 @@ import { InfestationChart } from './components/InfestationChart';
 import { StatusBadge } from './components/StatusBadge';
 import { LastUpdated } from './components/LastUpdated';
 import { formatNumber } from './lib/utils';
+import { aggregateSnapshots, normalizeSnapshots, type AggregatedData } from './lib/snapshots';
 import { Bug, AlertOctagon } from 'lucide-react';
-
-interface FollowerSnapshot {
-  id: number;
-  captured_at: string;
-  platform: 'instagram' | 'x';
-  party: 'BJP' | 'CJP';
-  handle: string;
-  follower_count: number;
-}
-
-interface AggregatedData {
-  latestBJPInsta: number;
-  latestBJPX: number;
-  latestCJPInsta: number;
-  latestCJPX: number;
-  lastScan: string;
-  chartData: any[];
-}
 
 export default function App() {
   const [data, setData] = useState<AggregatedData | null>(null);
@@ -41,46 +24,23 @@ export default function App() {
         const response = await fetch(scriptUrl);
         const jsonResponse = await response.json();
 
-        if (!Array.isArray(jsonResponse) || jsonResponse.length === 0) {
-           console.error("No data found or error", jsonResponse);
-           setLoading(false);
-           return;
+        if (!Array.isArray(jsonResponse)) {
+          console.error("Unexpected API response", jsonResponse);
+          setLoading(false);
+          return;
         }
-        
-        const snapshots = jsonResponse as FollowerSnapshot[];
-        const timeMap = new Map<string, any>();
-        
-        snapshots.forEach((s: FollowerSnapshot) => {
-          const timeKey = s.captured_at; 
-          if (!timeMap.has(timeKey)) {
-            timeMap.set(timeKey, { 
-              captured_at: timeKey,
-              bjp_instagram: 0, bjp_x: 0, cjp_instagram: 0, cjp_x: 0,
-              bjp_total: 0, cjp_total: 0
-            });
-          }
-          
-          const entry = timeMap.get(timeKey);
-          if (s.party === 'BJP' && s.platform === 'instagram') entry.bjp_instagram = s.follower_count;
-          if (s.party === 'BJP' && s.platform === 'x') entry.bjp_x = s.follower_count;
-          if (s.party === 'CJP' && s.platform === 'instagram') entry.cjp_instagram = s.follower_count;
-          if (s.party === 'CJP' && s.platform === 'x') entry.cjp_x = s.follower_count;
-          
-          entry.bjp_total = entry.bjp_instagram + entry.bjp_x;
-          entry.cjp_total = entry.cjp_instagram + entry.cjp_x;
-        });
 
-        const chartData = Array.from(timeMap.values());
-        const latest = chartData[chartData.length - 1];
+        const snapshots = normalizeSnapshots(jsonResponse);
+        if (snapshots.length === 0) {
+          console.warn("No valid snapshots after filtering", jsonResponse.length, "raw rows");
+          setLoading(false);
+          return;
+        }
 
-        setData({
-          latestBJPInsta: latest.bjp_instagram,
-          latestBJPX: latest.bjp_x,
-          latestCJPInsta: latest.cjp_instagram,
-          latestCJPX: latest.cjp_x,
-          lastScan: latest.captured_at,
-          chartData
-        });
+        const aggregated = aggregateSnapshots(snapshots);
+        if (aggregated) {
+          setData(aggregated);
+        }
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
@@ -103,7 +63,9 @@ export default function App() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand-bg gap-4">
         <div className="text-xl font-bold p-8 bg-brand-card border-4 border-brand-border shadow-[8px_8px_0px_0px_#111111] text-brand-text text-center">
           NO DATA FOUND.<br/>
-          <span className="text-sm text-brand-muted mt-2 block">Ensure the Google Apps Script Web App is deployed and seeded.</span>
+          <span className="text-sm text-brand-muted mt-2 block">
+            Ensure the Google Apps Script Web App is deployed, seeded, and your sheet has no blank rows.
+          </span>
         </div>
       </div>
     );
@@ -134,8 +96,12 @@ export default function App() {
         <div className="bg-brand-text text-brand-bg p-4 border-4 border-brand-border flex items-center gap-4 shadow-[4px_4px_0px_0px_var(--color-stamp)]">
           <AlertOctagon className="w-8 h-8 text-stamp flex-shrink-0" />
           <div>
-            <h4 className="font-heading font-black uppercase text-lg tracking-wider">Historical Marker: @CJP_2029</h4>
-            <p className="font-bold text-sm text-brand-bg/80">Original handle blocked at <span className="text-stamp">187.2K followers</span>.</p>
+            <h4 className="font-heading font-black uppercase text-lg tracking-wider">Handle Migration</h4>
+            <p className="font-bold text-sm text-brand-bg/80">
+              @CJP_2029 blocked at <span className="text-stamp">187.2K</span>. Now tracking{' '}
+              <span className="text-cjp">@Cockroachisback</span> (X) and{' '}
+              <span className="text-cjp">@cockroachjantaparty</span> (Instagram).
+            </p>
           </div>
         </div>
 

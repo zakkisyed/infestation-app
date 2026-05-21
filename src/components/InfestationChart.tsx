@@ -9,18 +9,8 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { format } from 'date-fns';
-import { cn, formatNumber } from '../lib/utils';
-
-interface ChartDataPoint {
-  captured_at: string;
-  bjp_total: number;
-  cjp_total: number;
-  bjp_instagram: number;
-  cjp_instagram: number;
-  bjp_x: number;
-  cjp_x: number;
-}
+import { cn, formatNumber, safeFormatDate } from '../lib/utils';
+import type { ChartDataPoint } from '../lib/snapshots';
 
 interface InfestationChartProps {
   data: ChartDataPoint[];
@@ -34,8 +24,8 @@ export const InfestationChart: React.FC<InfestationChartProps> = ({ data }) => {
   const formattedData = useMemo(() => {
     return data.map(d => ({
       ...d,
-      timestampForRef: d.captured_at.split('T')[0], // yyyy-mm-dd
-      formattedDate: format(new Date(d.captured_at), 'MMM dd, HH:mm')
+      timestampForRef: d.captured_at.split('T')[0],
+      formattedDate: safeFormatDate(d.captured_at, 'MMM dd, HH:mm'),
     }));
   }, [data]);
 
