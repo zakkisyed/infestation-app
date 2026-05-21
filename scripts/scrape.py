@@ -2,7 +2,6 @@ import json
 import re
 import os
 import requests
-from scrapling import Fetcher
 
 def parse_followers(count_str: str) -> int:
     """Convert a string like '23.1M' or '50K' to an integer."""
@@ -41,29 +40,20 @@ def scrape_twitter_followers(handle: str) -> int:
 def scrape_instagram_followers(handle: str) -> int:
     print(f"Attempting to scrape Instagram directly for @{handle}...")
     
-    fetcher = Fetcher(auto_match=False)
-    # Note: Instagram heavily blocks headless traffic. Scrapling might bypass it.
     try:
-        page = fetcher.get(f"https://www.instagram.com/{handle}/")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
+        response = requests.get(f"https://www.instagram.com/{handle}/", headers=headers, timeout=10)
         
-        # Try to find the meta description tag which often contains "23M Followers"
-        meta_desc = page.css('meta[property="og:description"]')
-        if meta_desc:
-            content = meta_desc[0].attrib.get('content', '')
-            match = re.search(r'([\d\.\,]+[KMB]?)\s*Followers', content, re.IGNORECASE)
-            if match:
-                count_str = match.group(1).replace(',', '')
-                print(f"Found IG followers from meta: {count_str}")
-                return parse_followers(count_str)
-        
-        # Generic text search in the DOM as a fallback
-        text_content = page.text
-        match = re.search(r'([\d\.\,]+[KMB]?)\s*followers', text_content, re.IGNORECASE)
+        match = re.search(r'([\d\.\,]+[KMB]?)\s*Followers', response.text, re.IGNORECASE)
         if match:
             count_str = match.group(1).replace(',', '')
-            print(f"Found IG followers from text: {count_str}")
+            print(f"Found IG followers from meta: {count_str}")
             return parse_followers(count_str)
-            
+        
         print(f"Could not find IG followers for {handle} (likely redirected to login).")
     except Exception as e:
         print(f"Error scraping Instagram for {handle}: {e}")
