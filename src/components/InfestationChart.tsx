@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
-import { cn, formatNumber, safeFormatDate } from '../lib/utils';
+import { cn, formatNumber, formatChartTimestamp } from '../lib/utils';
 import type { ChartDataPoint } from '../lib/snapshots';
 
 interface InfestationChartProps {
@@ -22,10 +22,10 @@ export const InfestationChart: React.FC<InfestationChartProps> = ({ data }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('Instagram');
 
   const formattedData = useMemo(() => {
-    return data.map(d => ({
+    return data.map((d) => ({
       ...d,
-      timestampForRef: d.captured_at.split('T')[0],
-      formattedDate: safeFormatDate(d.captured_at, 'MMM dd, HH:mm'),
+      chartKey: d.captured_at,
+      formattedDate: formatChartTimestamp(d.captured_at),
     }));
   }, [data]);
 
@@ -93,12 +93,13 @@ export const InfestationChart: React.FC<InfestationChartProps> = ({ data }) => {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={formattedData} margin={{ top: 20, right: 20, bottom: 5, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#D6D3C7" vertical={false} />
-            <XAxis 
-              dataKey="formattedDate" 
-              stroke="#111111" 
-              tick={{ fill: '#78716C', fontSize: 12, fontWeight: 'bold' }}
+            <XAxis
+              dataKey="chartKey"
+              stroke="#111111"
+              tick={{ fill: '#78716C', fontSize: 11, fontWeight: 'bold' }}
               tickMargin={10}
-              minTickGap={30}
+              minTickGap={24}
+              tickFormatter={(key) => formatChartTimestamp(String(key))}
             />
             <YAxis 
               stroke="#111111" 
@@ -106,7 +107,10 @@ export const InfestationChart: React.FC<InfestationChartProps> = ({ data }) => {
               tickFormatter={(val) => formatNumber(val)}
               width={60}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip
+              content={<CustomTooltip />}
+              labelFormatter={(key) => formatChartTimestamp(String(key))}
+            />
             <Legend 
               wrapperStyle={{ paddingTop: '20px', fontWeight: 'bold', fontSize: '14px', textTransform: 'uppercase' }} 
             />

@@ -32,7 +32,7 @@ The frontend accepts column B as either `Captured At` or `Timestamp` (the API no
 ### 2b. One-click sheet setup (cleared sheet with headers only)
 1. In Apps Script, select **`setupInfestationSheet`** from the function dropdown.
 2. Click **Run** and approve permissions.
-3. The script will: ensure headers → **clear all data rows** → seed May 19 → today → add **@CJP_2029** block at 187.2K (12:00 IST) → **audit** and log results.
+3. The script will: ensure headers → **clear all data rows** → seed **May 21 morning** (BJP IG **8.5M**, CJP IG **10M**, @CJP_2029 X **187.2K** at 12:00 IST) → **audit** and log results. Live scraper adds later points.
 4. Check **Execution log** for `Overall OK: true`.
 
 Other functions:

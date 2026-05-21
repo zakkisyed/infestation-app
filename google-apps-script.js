@@ -10,10 +10,14 @@
 const SHEET_NAME = 'Snapshots';
 const HEADERS = ['ID', 'Captured At', 'Platform', 'Party', 'Handle', 'Follower Count'];
 
-const SEED_START_UTC = '2026-05-19T12:00:00.000Z';
-const CJP_BLOCK_AT_UTC = '2026-05-21T06:30:00.000Z'; // 12:00 IST
+/** May 21 morning = 12:00 IST (06:30 UTC) — chart baseline for Instagram */
+const MAY_21_MORNING_UTC = '2026-05-21T06:30:00.000Z';
+const CJP_BLOCK_AT_UTC = MAY_21_MORNING_UTC;
 const CJP_LEGACY_X_HANDLE = 'CJP_2029';
 const CJP_LEGACY_X_FOLLOWERS = 187200;
+const BJP_IG_BASELINE = 8500000;
+const CJP_IG_BASELINE = 10000000;
+const BJP_X_BASELINE = 23050000;
 
 const CANONICAL = {
   BJP: { instagram: 'bjp4india', x: 'bjp4india' },
@@ -225,6 +229,25 @@ function auditSnapshotData(sheet) {
     );
   }
 
+  const morningRows = values.slice(1).filter((row, i) => {
+    const obj = rowToObject(headers, row);
+    return (obj.captured_at === MAY_21_MORNING_UTC || obj.timestamp === MAY_21_MORNING_UTC);
+  });
+  const bjpIgMorning = morningRows.find(r => rowToObject(headers, r).party === 'BJP' && rowToObject(headers, r).platform === 'instagram');
+  const cjpIgMorning = morningRows.find(r => rowToObject(headers, r).party === 'CJP' && rowToObject(headers, r).platform === 'instagram');
+  if (bjpIgMorning) {
+    const count = parseFloat(rowToObject(headers, bjpIgMorning).follower_count);
+    if (count !== BJP_IG_BASELINE) {
+      report.issues.push('BJP Instagram morning baseline should be ' + BJP_IG_BASELINE + ', got ' + count);
+    }
+  }
+  if (cjpIgMorning) {
+    const count = parseFloat(rowToObject(headers, cjpIgMorning).follower_count);
+    if (count !== CJP_IG_BASELINE) {
+      report.issues.push('CJP Instagram morning baseline should be ' + CJP_IG_BASELINE + ', got ' + count);
+    }
+  }
+
   if (report.invalidRows > 0) {
     report.ok = false;
   }
@@ -250,95 +273,14 @@ function logAuditReport(report) {
 // Seed row builder
 // ------------------------------------------------------------------
 function buildSeedRows() {
-  const startDate = new Date(SEED_START_UTC);
-  const blockDate = new Date(CJP_BLOCK_AT_UTC);
-  const endDate = new Date();
-  endDate.setUTCHours(12, 0, 0, 0);
-
-  const bjpPlatforms = [
-    { platform: 'instagram', party: 'BJP', handle: 'bjp4india', base: 8850000 },
-    { platform: 'x', party: 'BJP', handle: 'bjp4india', base: 23050000 },
+  // Single morning anchor (21 May 2026, 12:00 IST). Live scraper adds later snapshots.
+  const morning = MAY_21_MORNING_UTC;
+  return [
+    [1, morning, 'instagram', 'BJP', 'bjp4india', BJP_IG_BASELINE],
+    [2, morning, 'x', 'BJP', 'bjp4india', BJP_X_BASELINE],
+    [3, morning, 'instagram', 'CJP', 'cockroachjantaparty', CJP_IG_BASELINE],
+    [4, morning, 'x', 'CJP', CJP_LEGACY_X_HANDLE, CJP_LEGACY_X_FOLLOWERS],
   ];
-  const cjpInstagram = {
-    platform: 'instagram',
-    party: 'CJP',
-    handle: 'cockroachjantaparty',
-    base: 15100000,
-  };
-  const cjpLegacyX = {
-    platform: 'x',
-    party: 'CJP',
-    handle: CJP_LEGACY_X_HANDLE,
-    base: 175000,
-  };
-  const cjpNewX = {
-    platform: 'x',
-    party: 'CJP',
-    handle: 'Cockroachisback',
-    base: 30000,
-  };
-
-  const rows = [];
-  let nextId = 1;
-  const dayMs = 24 * 60 * 60 * 1000;
-
-  for (let t = startDate.getTime(); t <= endDate.getTime(); t += dayMs) {
-    const capturedAt = new Date(t);
-    const dayIndex = Math.floor((t - startDate.getTime()) / dayMs);
-    const growth = 1 + dayIndex * 0.002;
-
-    bjpPlatforms.forEach(p => {
-      rows.push([
-        nextId++,
-        capturedAt.toISOString(),
-        p.platform,
-        p.party,
-        p.handle,
-        Math.round(p.base * growth),
-      ]);
-    });
-
-    rows.push([
-      nextId++,
-      capturedAt.toISOString(),
-      cjpInstagram.platform,
-      cjpInstagram.party,
-      cjpInstagram.handle,
-      Math.round(cjpInstagram.base * growth),
-    ]);
-
-    if (capturedAt.getTime() < blockDate.getTime()) {
-      const legacyGrowth = 1 + dayIndex * 0.006;
-      rows.push([
-        nextId++,
-        capturedAt.toISOString(),
-        cjpLegacyX.platform,
-        cjpLegacyX.party,
-        cjpLegacyX.handle,
-        Math.round(cjpLegacyX.base * legacyGrowth),
-      ]);
-    } else {
-      rows.push([
-        nextId++,
-        capturedAt.toISOString(),
-        cjpNewX.platform,
-        cjpNewX.party,
-        cjpNewX.handle,
-        Math.round(cjpNewX.base * growth),
-      ]);
-    }
-  }
-
-  rows.push([
-    nextId++,
-    CJP_BLOCK_AT_UTC,
-    'x',
-    'CJP',
-    CJP_LEGACY_X_HANDLE,
-    CJP_LEGACY_X_FOLLOWERS,
-  ]);
-
-  return rows;
 }
 
 // ------------------------------------------------------------------
@@ -353,7 +295,7 @@ function setupInfestationSheet() {
   Logger.log('2/4 Clearing old data rows...');
   clearSnapshotRows(sheet);
 
-  Logger.log('3/4 Seeding from May 19, 2026...');
+  Logger.log('3/4 Seeding May 21 morning baseline (BJP IG 8.5M, CJP IG 10M)...');
   const rows = buildSeedRows();
   writeSnapshotRows(sheet, rows);
   Logger.log('   Wrote ' + rows.length + ' rows.');

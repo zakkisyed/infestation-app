@@ -9,8 +9,11 @@ export const CJP_LEGACY_X_HANDLE = 'CJP_2029';
 /** @CJP_2029 peak before block on 21 May 2026, 12:00 IST */
 export const CJP_LEGACY_X_FOLLOWERS = 187_200;
 
-/** 12:00 IST = 06:30 UTC */
+/** 12:00 IST = 06:30 UTC — May 21 morning baseline */
 export const CJP_BLOCK_TIMESTAMP = '2026-05-21T06:30:00.000Z';
+export const MAY_21_MORNING_UTC = CJP_BLOCK_TIMESTAMP;
+export const BJP_IG_BASELINE = 8_500_000;
+export const CJP_IG_BASELINE = 10_000_000;
 
 export function isCanonicalSnapshot(
   party: 'BJP' | 'CJP',

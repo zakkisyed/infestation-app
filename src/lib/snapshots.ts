@@ -115,14 +115,38 @@ function buildChartData(snapshots: FollowerSnapshot[]): ChartDataPoint[] {
     if (s.party === 'BJP' && s.platform === 'x') entry.bjp_x = s.follower_count;
     if (s.party === 'CJP' && s.platform === 'instagram') entry.cjp_instagram = s.follower_count;
     if (s.party === 'CJP' && s.platform === 'x') entry.cjp_x = s.follower_count;
-
-    entry.bjp_total = entry.bjp_instagram + entry.bjp_x;
-    entry.cjp_total = entry.cjp_instagram + entry.cjp_x;
   }
 
-  return Array.from(timeMap.values()).sort(
+  const sorted = Array.from(timeMap.values()).sort(
     (a, b) => new Date(a.captured_at).getTime() - new Date(b.captured_at).getTime()
   );
+
+  // Carry forward last known counts so partial snapshots (e.g. X-only) don't show as zero on IG view
+  let last: ChartDataPoint = {
+    captured_at: '',
+    bjp_instagram: 0,
+    bjp_x: 0,
+    cjp_instagram: 0,
+    cjp_x: 0,
+    bjp_total: 0,
+    cjp_total: 0,
+  };
+
+  return sorted.map((point) => {
+    const filled: ChartDataPoint = {
+      captured_at: point.captured_at,
+      bjp_instagram: point.bjp_instagram || last.bjp_instagram,
+      bjp_x: point.bjp_x || last.bjp_x,
+      cjp_instagram: point.cjp_instagram || last.cjp_instagram,
+      cjp_x: point.cjp_x || last.cjp_x,
+      bjp_total: 0,
+      cjp_total: 0,
+    };
+    filled.bjp_total = filled.bjp_instagram + filled.bjp_x;
+    filled.cjp_total = filled.cjp_instagram + filled.cjp_x;
+    last = filled;
+    return filled;
+  });
 }
 
 function latestCanonicalMetrics(snapshots: FollowerSnapshot[]): {

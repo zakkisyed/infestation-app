@@ -53,7 +53,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
           </div>
           <div className="flex justify-between items-baseline">
             <span className="text-3xl font-black font-heading">{formatNumber(bjpFollowers)}</span>
-            <span className="text-sm font-bold text-brand-muted">+{formatNumber(bjpGrowth)} since May 19</span>
+            <span className="text-sm font-bold text-brand-muted">+{formatNumber(bjpGrowth)} since May 21</span>
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
           </div>
           <div className="flex justify-between items-baseline">
             <span className="text-3xl font-black font-heading">{formatNumber(cjpFollowers)}</span>
-            <span className="text-sm font-bold text-brand-muted">+{formatNumber(cjpGrowth)} since May 19</span>
+            <span className="text-sm font-bold text-brand-muted">+{formatNumber(cjpGrowth)} since May 21</span>
           </div>
         </div>
         

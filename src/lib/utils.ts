@@ -20,6 +20,16 @@ export function safeFormatDate(
   }
 }
 
+/** Chart axis label in UTC so timestamps match sheet/API (avoids IST offset duplicates). */
+export function formatChartTimestamp(ts: string): string {
+  const d = new Date(ts);
+  const month = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const day = d.getUTCDate();
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const mm = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${month} ${day}, ${hh}:${mm} UTC`;
+}
+
 export function safeFormatDistance(ts: string | undefined, fallback = "—"): string {
   if (!isValidTimestamp(ts)) return fallback;
   try {
