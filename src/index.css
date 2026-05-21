@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #F4F1E8;
+  --color-brand-card: #FFFDF5;
+  --color-brand-text: #111111;
+  --color-brand-border: #111111;
+  --color-brand-muted: #78716C;
+  --color-cjp: #9CFF00;
+  --color-bjp: #FF7A00;
+  --color-stamp: #B91C1C;
+  --color-grid: #D6D3C7;
+
+  --font-heading: "Space Grotesk", "Archivo Black", "Satoshi", "Inter Tight", sans-serif;
+  --font-body: "Inter", "Geist", "Satoshi", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text font-body antialiased selection:bg-cjp selection:text-brand-text;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading uppercase tracking-tight;
+  }
+}
+
+@layer utilities {
+  .brutal-card {
+    @apply bg-brand-card border-4 border-brand-border rounded-none shadow-[4px_4px_0px_0px_#111111] transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#111111];
+  }
+  
+  .brutal-badge {
+    @apply inline-flex items-center justify-center border-2 border-brand-border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider bg-white shadow-[2px_2px_0px_0px_#111111];
+  }
+}

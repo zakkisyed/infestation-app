@@ -1,0 +1,28 @@
+name: 15-Minute Scraper
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  scrape-and-post:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Scraper
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: python scripts/scrape.py
