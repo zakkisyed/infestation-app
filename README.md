@@ -29,6 +29,16 @@ The frontend accepts column B as either `Captured At` or `Timestamp` (the API no
 3. Paste the contents into the Apps Script editor, replacing the default `myFunction()`.
 4. Click the **Save** icon.
 
+### 2b. One-click sheet setup (cleared sheet with headers only)
+1. In Apps Script, select **`setupInfestationSheet`** from the function dropdown.
+2. Click **Run** and approve permissions.
+3. The script will: ensure headers → **clear all data rows** → seed May 19 → today → add **@CJP_2029** block at 187.2K (12:00 IST) → **audit** and log results.
+4. Check **Execution log** for `Overall OK: true`.
+
+Other functions:
+- `runDataHealthCheck()` — audit only, no changes
+- `seedHistoricalData()` — alias for `setupInfestationSheet()`
+
 ### 3. Deploy the Web App
 1. In the Apps Script editor, click **Deploy > New deployment**.
 2. Click the gear icon next to "Select type" and choose **Web app**.
